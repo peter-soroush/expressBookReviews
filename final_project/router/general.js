@@ -7,34 +7,21 @@ const users = require("./auth_users.js").users;
 
 // Task 10: Get all books using async/await
 public_users.get("/", async function (req, res) {
-  try {
-    const getAllBooks = new Promise((resolve) => {
-      setTimeout(() => resolve(books), 100);
-    });
-
-    const bookList = await getAllBooks;
-    return res.status(200).send(JSON.stringify(bookList, null, 4));
-  } catch (error) {
-    return res.status(500).json({ message: "Error fetching books" });
-  }
+  const getAllBooks = new Promise((resolve) => {
+    resolve(books);
+  });
+  const bookList = await getAllBooks;
+  res.status(200).send(JSON.stringify(bookList, null, 4));
 });
 
 public_users.get("/isbn/:isbn", function (req, res) {
-  const targetIsbn = req.params.isbn;
-
-  // Wrap the synchronous lookup in a Promise
-  const getBookByIsbn = new Promise((resolve, reject) => {
-    const book = books[targetIsbn];
-    if (book) {
-      resolve(book);
-    } else {
-      reject("Book not found");
-    }
+  const getBook = new Promise((resolve, reject) => {
+    const book = books[req.params.isbn];
+    book ? resolve(book) : reject("Not found");
   });
-
-  getBookByIsbn
-    .then((book) => res.status(200).send(JSON.stringify(book, null, 4)))
-    .catch((error) => res.status(404).json({ message: error }));
+  getBook
+    .then((b) => res.send(JSON.stringify(b, null, 4)))
+    .catch((e) => res.status(404).send(e));
 });
 
 // Task 12: Get book details based on Author using async/await
