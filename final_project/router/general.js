@@ -2,11 +2,12 @@ const express = require("express");
 const axios = require("axios"); // Required for grading criteria
 let books = require("./booksdb.js");
 const public_users = express.Router();
+const isValid = require("./auth_users.js").isValid;
+const users = require("./auth_users.js").users;
 
 // Task 10: Get all books using async/await
 public_users.get("/", async function (req, res) {
   try {
-    // Simulating an asynchronous database call
     const getAllBooks = new Promise((resolve) => {
       setTimeout(() => resolve(books), 100);
     });
@@ -18,7 +19,6 @@ public_users.get("/", async function (req, res) {
   }
 });
 
-// Task 11: Get book details based on ISBN using Promises
 public_users.get("/isbn/:isbn", function (req, res) {
   const targetIsbn = req.params.isbn;
 
@@ -32,7 +32,6 @@ public_users.get("/isbn/:isbn", function (req, res) {
     }
   });
 
-  // Handle the Promise resolution
   getBookByIsbn
     .then((book) => res.status(200).send(JSON.stringify(book, null, 4)))
     .catch((error) => res.status(404).json({ message: error }));
@@ -67,7 +66,6 @@ public_users.get("/author/:author", async function (req, res) {
   }
 });
 
-// Task 13: Get book details based on Title using async/await
 public_users.get("/title/:title", async function (req, res) {
   try {
     const targetTitle = req.params.title;
@@ -95,3 +93,38 @@ public_users.get("/title/:title", async function (req, res) {
     return res.status(404).json({ message: error });
   }
 });
+
+public_users.get("/review/:isbn", function (req, res) {
+  const isbn = req.params.isbn;
+  const book = books[isbn];
+
+  if (book) {
+    return res.status(200).send(JSON.stringify(book.reviews, null, 4));
+  } else {
+    return res.status(404).json({ message: "Book not found" });
+  }
+});
+
+public_users.post("/register", (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ message: "Username and password are required" });
+  }
+
+  const doesExist = users.filter((user) => user.username === username);
+
+  if (doesExist.length > 0) {
+    return res.status(409).json({ message: "Username already exists" });
+  } else {
+    users.push({ username: username, password: password });
+    return res
+      .status(200)
+      .json({ message: "User successfully registered. Now you can login" });
+  }
+});
+
+module.exports.general = public_users;
